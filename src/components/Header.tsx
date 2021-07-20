@@ -1,6 +1,5 @@
 import React from "react";
 import styled from "styled-components"
-import { isPropertySignature } from "typescript";
 
 const HeaderWrapper = styled.div<{height: number}>`
     width: 100vw;
