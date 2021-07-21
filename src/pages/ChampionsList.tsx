@@ -12,9 +12,7 @@ interface ChampionListProps {
 interface ChampionListState {
     allChampions: ChampionModel[];
     champions: ChampionModel[];
-    championsName: ChampionModel[];
     type: string;
-    userInput: string;
 }
 
 const ChampionListPageWrapper = styled.div`
@@ -26,29 +24,27 @@ const ChampionListPageWrapper = styled.div`
 
 // List of champion page
 export default class ChampionsList extends React.Component<ChampionListProps, ChampionListState> {
-
     constructor(props: ChampionListProps) {
         super(props);
 
         this.state = {
             allChampions: [],
-            champions: [], 
-            type:"ALL",
-            championsName: [],
-            userInput: "",
+            champions: [],
+            type: "ALL",
         }
     }
 
     async componentDidMount() {
         const response = await axios.get("http://opgg.dudco.kr/champion");
-        const allChampions = response.data.map((data: any)=> 
+        const allChampions = response.data.map((data: any) => 
             new ChampionModel({
-                id: data.id, 
-                name: data.name, 
-                key: data.key, 
+                id: data.id,
+                name: data.name,
+                key: data.key,
                 position: data.position
             })
         );
+    
         this.setState({
             allChampions,
             champions: allChampions,
@@ -57,24 +53,24 @@ export default class ChampionsList extends React.Component<ChampionListProps, Ch
 
     onChangeType = (type: string) => () => {
         this.setState({
-            type, 
+            type,
             champions: this.filterChampions(type),
         });
     }
-
+    
     filterChampions = (type: string) => {
-        switch(type) {
-            case "TOP" :
-                return this.state.allChampions.filter(c => c.position!!.indexOf("탑") > -1);
-            case "JUG" :
-                return this.state.allChampions.filter(c => c.position!!.indexOf("정글") > -1);
-            case "MID" :
-                return this.state.allChampions.filter(c => c.position!!.indexOf("미드") > -1);
-            case "ADC" :
-                return this.state.allChampions.filter(c => c.position!!.indexOf("바텀") > -1);
-            case "SUP" :
-                return this.state.allChampions.filter(c => c.position!!.indexOf("서포터") > -1);
-            default: 
+        switch (type) {
+            case "TOP":
+                return this.state.allChampions.filter(c => c.position!!.indexOf("탑") > -1);        
+            case "JUG":
+                return this.state.allChampions.filter(c => c.position!!.indexOf("정글") > -1);        
+            case "MID":
+                return this.state.allChampions.filter(c => c.position!!.indexOf("미드") > -1);        
+            case "ADC":
+                return this.state.allChampions.filter(c => c.position!!.indexOf("바텀") > -1);        
+            case "SUP":
+                return this.state.allChampions.filter(c => c.position!!.indexOf("서포터") > -1);        
+            default:
                 return this.state.allChampions;
         }
     }
@@ -97,15 +93,15 @@ export default class ChampionsList extends React.Component<ChampionListProps, Ch
                     <div className="list">
                         {
                             this.state.champions.map((data) => 
-                                <Champion
-                                    key = {data.id}
+                                <Champion 
+                                    key={data.id}
                                     id={Number(data.id) || 0}
                                     position={data.position || []}
                                     name = {data.name || ""}
                                 />
                             )
                         }
-                        {[1, 2, 3 ,4, 5, 6].map(() => <div style={{width: "82px", height: 0}}/>)}
+                        {[1, 2, 3, 4, 5, 6].map(() => <div style={{width: "82px", height: 0}}/>)}
                     </div>
                 </ChampionsWrapper>
                 <ChampionTrendWrapper>
