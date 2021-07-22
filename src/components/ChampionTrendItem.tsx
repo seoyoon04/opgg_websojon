@@ -72,7 +72,7 @@ const ChampionTrendItem: React.FC = () => {
             </div>
             <div className="champ-img"/>
             <div className="champ-desc">
-                <div>아드록스</div>
+                <div>아트록스</div>
                 <div>탑</div>
             </div>
         </div>
