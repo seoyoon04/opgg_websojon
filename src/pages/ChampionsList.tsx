@@ -1,16 +1,21 @@
+  
 import React from "react";
 import styled from "styled-components";
 import classnames from "classnames";
 import Champion from "../components/Champion";
 import axios from "axios";
+
 import ChampionModel from "../models/ChampionModel";
-import championTier from "../assets/icon-champion-p.png";
+import ChampionTrendItem from "../components/ChampionTrendItem";
+import { collapseTextChangeRangesAcrossMultipleVersions, isTemplateTail } from "typescript";
 import championTier1 from "../assets/icon-champtier-1.png";
 import tierStay from "../assets/icon-championtier-stay.png";
-import champion32 from "../assets/champion32.png";
-import ChampionTrendItem from "../components/ChampionTrendItem";
+import champion32 from "../assets/champion32.png"
 import ChampionTrendHeader from "../components/ChampionTrendHeader";
 import ChampionTrendToolbar from "../components/ChampionTrendToolbar";
+import ChampionTrendModel from "../models/ChampionTrendModel";
+import championTier from "../assets/championIcon.png";
+import championTierN from "../assets/icon-champion-n.png";
 
 interface ChampionListProps{
 
@@ -21,6 +26,10 @@ interface ChampionListState{
     champions: ChampionModel[];
     type: string;
     input: string;
+
+    trendChampions: ChampionTrendModel[];
+    trendType: string;
+    trendPosition: string;
 }
 
 const ChampionListPageWrapper = styled.div`
@@ -41,6 +50,10 @@ export default class ChampionsList extends React.Component<ChampionListProps, Ch
             champions: [],
             type: "ALL",
             input: "",
+
+            trendChampions: [],
+            trendType: "tier",
+            trendPosition: "top",
         }
     }
 
@@ -54,10 +67,22 @@ export default class ChampionsList extends React.Component<ChampionListProps, Ch
                 position: data.position
             })
         );
+
+        const trendChampions = await this.getTrendList("tier");
+
         this.setState({
             allChampions,
             champions: allChampions,
+            trendChampions,
         });
+    }
+    
+    componentDidUpdate(){
+
+    }
+
+    componentWillUnmount(){
+
     }
 
     onChangeType = (type: string) => () => {
@@ -117,7 +142,40 @@ export default class ChampionsList extends React.Component<ChampionListProps, Ch
         if (input === ""){
             return temp;
         }
-        return temp.filter((c, dix) => c.name!!.indexOf(input) > -1);
+        return temp.filter((c, dix) => c.name?.includes(input));
+    }
+
+    onClickTrendType = (type: string) => async () => {
+        const trendChampions = await this.getTrendList(type);
+        this.setState({trendType: type, trendChampions, trendPosition: type === "tier" ? "top" : "all"});
+    }
+
+    onClickTrendPosition = (position: string) => async() => {
+        const trendChampions = await this.getTrendList(this.state.trendType, position);
+        this.setState({trendChampions, trendPosition: position});
+    }
+
+    getTrendList = async (type:string, position?: string) => {
+        if(!position){
+            if (type === "tier") position = "top"
+            else position = "all";
+        }
+        const responseTrend = await axios.get(`http://opgg.dudco.kr/champion/trend/${type}/${position}`);
+        const trendChampions = responseTrend.data.map((data: any) => 
+            new ChampionTrendModel({
+                id: data.id,
+                rank: data.rank,
+                change: data.change,
+                name: data.name,
+                position: data.position,
+                winRate: data.winRate,
+                pickRate: data.pickRate,
+                banRate: data.banRate,
+                tierIcon: data.tierIcon,
+            })
+        );
+
+        return trendChampions;
     }
 
     render() {
@@ -153,51 +211,84 @@ export default class ChampionsList extends React.Component<ChampionListProps, Ch
                         {[1, 2, 3, 4, 5, 6].map(() => <div style={{width: "82px", height: 0}}/>)}
                     </div>
                 </ChampionsWrapper>
-                <ChampionTrendWrapper>
+                <ChampionsTrendWrapper>
                     <div className="header">
-                        <div>챔피언 순위</div>
-                        <div className = "item-wrap">
-                            <div className="item select">
-                                <img src={championTier}/>
+                        <div className="item">챔피언 순위</div>
+                        <div className="item-wrap">
+                            <div 
+                                className={classnames("item", {select: this.state.trendType === "tier"})} 
+                                onClick={this.onClickTrendType("tier")}
+                            >
+                                <img src={this.state.trendType === "tier" ? championTier : championTierN}/>
                                 티어
                             </div>
-                            <div className="item">승률</div>
-                            <div className="item">픽률</div>
-                            <div className="item">밴률</div>
+                            <div 
+                                className={classnames("item", {select: this.state.trendType === "winratio"})} 
+                                onClick={this.onClickTrendType("winratio")}
+                            >
+                                승률
+                            </div>
+                            <div 
+                                className={classnames("item", {select: this.state.trendType === "pickratio"})} 
+                                onClick={this.onClickTrendType("pickratio")}
+                            >
+                                픽률
+                            </div>
+                            <div 
+                                className={classnames("item", {select: this.state.trendType === "banratio"})} 
+                                onClick={this.onClickTrendType("banratio")}
+                            >
+                                밴률
+                            </div>
                         </div>
                     </div>
                     <div className="list">
-                       <ChampionTrendToolbar className="list-item toolbar">
-                           <div hidden={true}>전체</div>
-                           <div className="select">탑</div>
-                           <div>정글</div>
-                           <div>미드</div>
-                           <div>바텀</div>
-                           <div>서포터</div>
-                       </ChampionTrendToolbar>
-                       <ChampionTrendHeader className="list-item header">
-                           <div>#</div>
-                           <div>챔피언</div>
-                           <div>승률</div>
-                           <div>픽률</div>
-                           <div>티어</div>
-                       </ChampionTrendHeader> 
-                       <ChampionTrendItem/>      
+                        <ChampionTrendToolbar>
+                            <div className={classnames({select: this.state.trendPosition === "all"})} onClick={this.onClickTrendPosition("all")} hidden={this.state.trendType === "tier"}>전체</div>
+                            <div className={classnames({select: this.state.trendPosition === "top"})} onClick={this.onClickTrendPosition("top")}>탑</div>
+                            <div className={classnames({select: this.state.trendPosition === "jungle"})} onClick={this.onClickTrendPosition("jungle")}>정글</div>
+                            <div className={classnames({select: this.state.trendPosition === "mid"})} onClick={this.onClickTrendPosition("mid")}>미드</div>
+                            <div className={classnames({select: this.state.trendPosition === "adc"})} onClick={this.onClickTrendPosition("adc")}>바텀</div>
+                            <div className={classnames({select: this.state.trendPosition === "support"})} onClick={this.onClickTrendPosition("support")}>서포터</div>
+                        </ChampionTrendToolbar>
+                        <ChampionTrendHeader>
+                            <div>#</div>
+                            <div>챔피언</div>
+                            <div className={classnames({select: this.state.trendType === "winratio"})} hidden={this.state.trendType === "banratio"}>승률</div>
+                            <div className={classnames({select: this.state.trendType === "pickratio"})} hidden={this.state.trendType === "banratio"}>픽률</div>
+                            <div hidden={this.state.trendType !== "tier"}>티어</div>
+                            <div hidden={this.state.trendType !== "banratio"}>밴률</div>
+                        </ChampionTrendHeader>               
+                        {
+                            this.state.trendChampions.map(c => 
+                            <ChampionTrendItem
+                                championID={c.id}
+                                change={c.change}
+                                name={c.name}
+                                position={c.position}
+                                win={c.winRate}
+                                pick={c.pickRate}
+                                ban={c.banRate}
+                                tier={c.tierIcon}
+                                rank={c.rank}
+                                type={this.state.trendType}
+                            />)
+                        }
                     </div>
-                </ChampionTrendWrapper>
+                </ChampionsTrendWrapper>
             </ChampionListPageWrapper>
         )
     }
 }   
 
 const ChampionsWrapper = styled.div`
-    background-color: white;
     border-right: 1px solid #e9eff4;
     & > .header{
         display: flex;
         justify-content: space-between;
         padding: 0 17px;
         border-bottom: 1px solid #e9eff4;
+        background-color: white;
         & > .item-wrap{
             display: flex;
         }
@@ -231,52 +322,45 @@ const ChampionsWrapper = styled.div`
     }
 `
 
-const ChampionTrendWrapper = styled.div`
+const ChampionsTrendWrapper = styled.div`
     flex: 1;
     background-color: white;
-    & > div.header {
-        justify-content: space-between;
-        align-items: center;
+    border-right: 1px solid #e9eff4;
+    & > .header{
         display: flex;
+        justify-content: space-between;
+        padding: 0 17px;
         border-bottom: 1px solid #e9eff4;
+        line-height: 60px;
         font-weight: bold;
-        font-size: 14px;
-        padding: 0 20px;
-        & > .item-wrap {
+        
+        & > .item-wrap{
             display: flex;
-            color: rgba(0,0,0,.6);
-            & > .item {
-                display: flex;
-                align-items: center;
-                position: relative;
+            justify-content: space-between;
+            
+            & > .item{
                 line-height: 60px;
-                margin: 0 10px;
-                padding: 0 5px;
+                padding: 0 12px;
+                color: rgba(0, 0, 0, .6);
                 cursor: pointer;
-            }
-            & > .item > img {
-                height: 17px;
-                margin-right: 5px;
-            }
-            & > .item:not(:last-child)::after {
-                content: "";
-                width: 1px;
-                height: 20px;
-                background-color: #eee;
-                position: absolute;
-                right: -10px;
-                top: 50%;
-                margin-top: -10px;
-            }
-            & > .item.select {
-                color: #5383e8;
-                box-shadow: 0px -3px 0px 0px #5383e8 inset;
+                position: relative;
+                &.select {
+                    box-shadow: 0px -3px 0px 0px #5383e8 inset;
+                    color: #5383e8;
+                }
+                &:not(:last-child)::after{
+                    content: "";
+                    width: 1px;
+                    height: 20px;
+                    background: #eee;
+                    position: absolute;
+                    right: -1px;
+                    top: 35%;
+                }
             }
         }
     }
-
-    & > div.list {
-        height: 100vh;
+    & > div.list{
         background-color: #f7f7f7;
         padding: 20px;
     }
