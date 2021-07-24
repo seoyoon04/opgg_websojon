@@ -1,4 +1,4 @@
-export default class ChampionTrendModel{
+export default class ChampionTrendModel {
     id: number;
     rank: string;
     change: number;
@@ -9,7 +9,7 @@ export default class ChampionTrendModel{
     banRate: string;
     tierIcon: string;
 
-    constructor(data: ChampionTrendModel){
+    constructor(data: ChampionTrendModel) {
         this.id = data.id;
         this.rank = data.rank;
         this.change = data.change;

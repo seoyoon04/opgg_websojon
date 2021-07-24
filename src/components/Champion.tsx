@@ -42,7 +42,7 @@ const ChampionWrapper = styled.div`
     }
 `
 
-interface ChampionProps{
+interface ChampionProps {
     id: number;
     name: string;
     position: string[];
@@ -57,8 +57,8 @@ const Champion: React.FC<ChampionProps> = (props) => {
                     {props.position.map(p => {
                         return (
                             <>
-                                <span>{p}</span> 
-                                <br/>
+                                <span>{p}</span>
+                                <br />
                             </>
                         )
                     })}
